@@ -1,0 +1,46 @@
+{
+  "name": "spot-codemonkey",
+  "version": "0.1.0",
+  "description": "Drop GPS-anchored post-it notes (text/photo) on a map. Pure static web app, nothing leaves your device.",
+  "license": "Apache-2.0",
+  "author": "Cristian Vat",
+  "homepage": "https://spot.codemonkey.ro",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deathy/spot.codemonkey.ro.git"
+  },
+  "bugs": {
+    "url": "https://github.com/deathy/spot.codemonkey.ro/issues"
+  },
+  "keywords": [
+    "map",
+    "notes",
+    "geolocation",
+    "leaflet",
+    "openstreetmap",
+    "pwa",
+    "privacy",
+    "preact",
+    "web-app"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "idb": "8.0.3",
+    "leaflet": "1.9.4",
+    "preact": "10.29.2"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "2.10.5",
+    "@types/leaflet": "1.9.20",
+    "typescript": "6.0.3",
+    "vite": "8.0.16",
+    "vite-plugin-pwa": "1.3.0",
+    "vitest": "4.1.9"
+  }
+}
