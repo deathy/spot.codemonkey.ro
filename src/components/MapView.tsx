@@ -1,7 +1,7 @@
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useEffect, useRef } from 'preact/hooks';
-import type { GpsFix, Note, Settings } from '../lib/types';
+import type { GpsFix, MapCamera, Note } from '../lib/types';
 import {
   DEFAULT_CENTER,
   DEFAULT_ZOOM,
@@ -14,21 +14,25 @@ import {
 interface Props {
   notes: Note[];
   location: GpsFix | null;
+  /** Whether the map tab is currently visible (drives size recalculation). */
+  active: boolean;
   /** When set, a draggable pin is shown for placing/editing a note. */
   placing: { lat: number; lng: number } | null;
   onPlacingMove: (lat: number, lng: number) => void;
   onMarkerClick: (id: string) => void;
-  settings: Settings;
-  onViewChange: (view: { lat: number; lng: number; zoom: number }) => void;
+  /** Long-press (or right-click) on the map to drop a note there. */
+  onLongPress: (lat: number, lng: number) => void;
+  onViewChange: (camera: MapCamera) => void;
 }
 
 export function MapView({
   notes,
   location,
+  active,
   placing,
   onPlacingMove,
   onMarkerClick,
-  settings,
+  onLongPress,
   onViewChange
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -38,23 +42,23 @@ export function MapView({
   const placingMarkerRef = useRef<L.Marker | null>(null);
   const didInitialCenter = useRef(false);
 
-  // Latest callback without forcing map re-init.
+  // Keep latest callbacks without forcing the map to re-initialise.
   const onViewChangeRef = useRef(onViewChange);
   onViewChangeRef.current = onViewChange;
   const onMarkerClickRef = useRef(onMarkerClick);
   onMarkerClickRef.current = onMarkerClick;
   const onPlacingMoveRef = useRef(onPlacingMove);
   onPlacingMoveRef.current = onPlacingMove;
+  const onLongPressRef = useRef(onLongPress);
+  onLongPressRef.current = onLongPress;
 
   // One-time map setup.
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
-    const start = settings.lastMapView;
     const map = L.map(containerRef.current, { zoomControl: true }).setView(
-      start ? [start.lat, start.lng] : DEFAULT_CENTER,
-      start ? start.zoom : DEFAULT_ZOOM
+      DEFAULT_CENTER,
+      DEFAULT_ZOOM
     );
-    if (start) didInitialCenter.current = true;
     tileLayer().addTo(map);
     notesLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
@@ -64,15 +68,34 @@ export function MapView({
       onViewChangeRef.current({ lat: c.lat, lng: c.lng, zoom: map.getZoom() });
     });
 
-    // Leaflet needs a size recalculation once laid out in a flex container.
-    setTimeout(() => map.invalidateSize(), 0);
+    // Long-press on touch fires 'contextmenu' in Leaflet; also covers right-click.
+    map.on('contextmenu', (e: L.LeafletMouseEvent) => {
+      onLongPressRef.current(e.latlng.lat, e.latlng.lng);
+    });
+
+    // Recalculate whenever the container's box changes (layout, safe-area insets,
+    // rotation). Without this Leaflet keeps a stale size and only paints tiles for
+    // part of the viewport after panning/zooming.
+    const ro = new ResizeObserver(() => map.invalidateSize());
+    ro.observe(containerRef.current);
+    // And once more after first paint, when flex layout has settled.
+    requestAnimationFrame(() => map.invalidateSize());
 
     return () => {
+      ro.disconnect();
       map.remove();
       mapRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Fix the size when the map tab becomes visible again (it has zero size while
+  // hidden with `display:none`).
+  useEffect(() => {
+    if (active && mapRef.current) {
+      requestAnimationFrame(() => mapRef.current?.invalidateSize());
+    }
+  }, [active]);
 
   // Render note markers whenever the set changes.
   useEffect(() => {
@@ -121,7 +144,10 @@ export function MapView({
           onPlacingMoveRef.current(p.lat, p.lng);
         });
         placingMarkerRef.current = marker;
-        map.panTo([placing.lat, placing.lng]);
+        // Bring the pin into view (helps when editing a note that's off-screen).
+        if (!map.getBounds().contains([placing.lat, placing.lng])) {
+          map.panTo([placing.lat, placing.lng]);
+        }
       } else {
         placingMarkerRef.current.setLatLng([placing.lat, placing.lng]);
       }

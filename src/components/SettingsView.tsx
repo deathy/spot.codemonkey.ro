@@ -1,16 +1,13 @@
 import { useRef, useState } from 'preact/hooks';
-import type { Settings } from '../lib/types';
 import { downloadExport, importFromJson } from '../lib/export';
 import { clearAll } from '../lib/db';
 
 interface Props {
-  settings: Settings;
   noteCount: number;
-  onChange: (patch: Partial<Settings>) => void;
   onDataChanged: () => void;
 }
 
-export function SettingsView({ settings, noteCount, onChange, onDataChanged }: Props) {
+export function SettingsView({ noteCount, onDataChanged }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
@@ -41,22 +38,6 @@ export function SettingsView({ settings, noteCount, onChange, onDataChanged }: P
   return (
     <div class="settings-view">
       <h2>Settings</h2>
-
-      <label class="setting">
-        <div class="setting-text">
-          <span class="setting-label">Remember map position</span>
-          <span class="setting-hint">
-            Reopen the map where you left it, instead of jumping to your current location.
-          </span>
-        </div>
-        <input
-          type="checkbox"
-          checked={settings.rememberMapView}
-          onChange={(e) =>
-            onChange({ rememberMapView: (e.target as HTMLInputElement).checked })
-          }
-        />
-      </label>
 
       <h3>Your data</h3>
       <p class="setting-hint">

@@ -322,6 +322,7 @@ button.danger {
 .note-row {
   width: 100%;
   text-align: left;
+  align-items: flex-start;
   justify-content: flex-start;
   gap: 12px;
   margin-top: 8px;
@@ -329,23 +330,59 @@ button.danger {
 }
 .note-row-icon {
   font-size: 1.3rem;
+  flex: 0 0 auto;
+  width: 52px;
+  text-align: center;
+}
+.note-thumb {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  background: var(--bg);
+  overflow: hidden;
+}
+.note-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .note-row-body {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 .note-row-text {
   color: var(--text);
+  white-space: pre-wrap;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+.note-row-text.dim {
+  color: var(--text-dim);
+  font-style: italic;
 }
 .note-row-meta {
   font-size: 0.78rem;
   color: var(--text-dim);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+.note-dist {
+  color: var(--accent);
+}
+.note-row-date {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  opacity: 0.8;
 }
 
 .empty {
@@ -453,6 +490,10 @@ button.danger {
 .leaflet-container {
   background: var(--bg-elev);
   font: inherit;
+  /* Stop the long-press text-selection / callout so it can drop a note instead. */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .leaflet-control-attribution {
   background: rgba(15, 23, 42, 0.7) !important;

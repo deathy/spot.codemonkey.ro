@@ -5,8 +5,7 @@ import { NoteDetail } from './components/NoteDetail';
 import { NoteForm, type Draft } from './components/NoteForm';
 import { AddButton } from './components/AddButton';
 import { SettingsView } from './components/SettingsView';
-import type { GpsFix, Note, Settings } from './lib/types';
-import { loadSettings, saveSettings } from './lib/settings';
+import type { GpsFix, MapCamera, Note } from './lib/types';
 import { getAllNotes, getImage, putNote, deleteNote, deleteImage } from './lib/db';
 import { getLocation, primeLocation } from './lib/geo';
 import { processImage } from './lib/image';
@@ -16,7 +15,6 @@ type View = 'map' | 'list' | 'settings';
 
 export function App() {
   const [view, setView] = useState<View>('map');
-  const [settings, setSettings] = useState<Settings>(loadSettings);
   const [notes, setNotes] = useState<Note[]>([]);
   const [location, setLocation] = useState<GpsFix | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -24,6 +22,8 @@ export function App() {
   const [draftMode, setDraftMode] = useState<'create' | 'edit'>('create');
 
   const photoInputRef = useRef<HTMLInputElement>(null);
+  // Latest map camera, tracked in memory so new notes land where you're looking.
+  const cameraRef = useRef<MapCamera | null>(null);
   // Object URL for an edited note's existing image, tracked so we can revoke it.
   const editImageUrl = useRef<string | null>(null);
 
@@ -53,36 +53,18 @@ export function App() {
     };
   }, []);
 
-  useEffect(() => {
-    saveSettings(settings);
-  }, [settings]);
-
-  function patchSettings(patch: Partial<Settings>) {
-    setSettings((s) => ({ ...s, ...patch }));
-  }
-
-  function rememberView(v: { lat: number; lng: number; zoom: number }) {
-    if (settings.rememberMapView) {
-      setSettings((s) => ({ ...s, lastMapView: v }));
-    }
-  }
-
-  // Where to place a new note: current fix, else remembered view, else default.
-  async function seedLocation(): Promise<{ lat: number; lng: number; accuracy?: number }> {
-    const fix = await getLocation(Date.now());
-    if (fix) {
-      setLocation(fix);
-      return { lat: fix.lat, lng: fix.lng, accuracy: fix.accuracy };
-    }
-    const v = settings.lastMapView;
-    if (v) return { lat: v.lat, lng: v.lng };
+  // Where a new note lands: what the map is centred on, else the current fix,
+  // else the generic fallback. Following the map keeps placement predictable.
+  function seedLocation(): { lat: number; lng: number } {
+    const cam = cameraRef.current;
+    if (cam) return { lat: cam.lat, lng: cam.lng };
+    if (location) return { lat: location.lat, lng: location.lng };
     return { lat: DEFAULT_CENTER[0], lng: DEFAULT_CENTER[1] };
   }
 
-  async function startTextNote() {
-    const seed = await seedLocation();
+  function startTextNote() {
     setDraftMode('create');
-    setDraft({ ...seed, text: '', imageBlob: null });
+    setDraft({ ...seedLocation(), text: '', imageBlob: null });
     setView('map');
   }
 
@@ -95,9 +77,17 @@ export function App() {
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
-    const [processed, seed] = await Promise.all([processImage(file), seedLocation()]);
+    const processed = await processImage(file);
     setDraftMode('create');
-    setDraft({ ...seed, text: '', imageBlob: processed });
+    setDraft({ ...seedLocation(), text: '', imageBlob: processed });
+    setView('map');
+  }
+
+  // Long-press on the map: drop a note exactly where the finger landed.
+  function startNoteAt(lat: number, lng: number) {
+    if (draft) return; // already placing/editing
+    setDraftMode('create');
+    setDraft({ lat, lng, text: '', imageBlob: null });
     setView('map');
   }
 
@@ -196,13 +186,14 @@ export function App() {
           <MapView
             notes={notes}
             location={location}
+            active={view === 'map'}
             placing={draft ? { lat: draft.lat, lng: draft.lng } : null}
             onPlacingMove={(lat, lng) =>
               setDraft((d) => (d ? { ...d, lat, lng, accuracy: undefined } : d))
             }
             onMarkerClick={setDetailId}
-            settings={settings}
-            onViewChange={rememberView}
+            onLongPress={startNoteAt}
+            onViewChange={(cam) => (cameraRef.current = cam)}
           />
           {!draft && <AddButton onAddText={startTextNote} onAddPhoto={startPhotoNote} />}
         </div>
@@ -212,12 +203,7 @@ export function App() {
         )}
 
         {view === 'settings' && (
-          <SettingsView
-            settings={settings}
-            noteCount={notes.length}
-            onChange={patchSettings}
-            onDataChanged={refreshNotes}
-          />
+          <SettingsView noteCount={notes.length} onDataChanged={refreshNotes} />
         )}
       </main>
 

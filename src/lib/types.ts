@@ -29,11 +29,11 @@ export interface Note {
   updatedAt: number;
 }
 
-export interface Settings {
-  /** Restore the last map centre/zoom on launch instead of the user's location. */
-  rememberMapView: boolean;
-  /** Persisted map camera, when rememberMapView is on. */
-  lastMapView: { lat: number; lng: number; zoom: number } | null;
+/** A map camera position — centre plus zoom. Used transiently, never persisted. */
+export interface MapCamera {
+  lat: number;
+  lng: number;
+  zoom: number;
 }
 
 export const EXPORT_VERSION = 1;
