@@ -7,6 +7,7 @@ import {
   DEFAULT_ZOOM,
   locationIcon,
   noteIcon,
+  placingIcon,
   tileLayer
 } from '../lib/map';
 
@@ -111,7 +112,7 @@ export function MapView({
     if (placing) {
       if (!placingMarkerRef.current) {
         const marker = L.marker([placing.lat, placing.lng], {
-          icon: noteIcon(),
+          icon: placingIcon(),
           draggable: true,
           zIndexOffset: 1000
         }).addTo(map);

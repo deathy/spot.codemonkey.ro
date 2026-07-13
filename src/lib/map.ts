@@ -13,14 +13,32 @@ export function tileLayer(): L.TileLayer {
   });
 }
 
-/** Teardrop pin for a saved note. */
+// Standard teardrop map-pin. The body uses `currentColor` so a CSS class can
+// theme it (accent for saved notes, a hot colour for the one being placed).
+const PIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 38" width="26" height="38">
+  <path d="M13 1C6.4 1 1 6.4 1 13c0 8.6 10.6 22.4 11.1 23a1.2 1.2 0 0 0 1.9 0C14.4 35.4 25 21.6 25 13 25 6.4 19.6 1 13 1z" fill="currentColor" stroke="#fff" stroke-width="1.5"/>
+  <circle cx="13" cy="13" r="4.5" fill="#fff"/>
+</svg>`;
+
+/** Standard teardrop pin for a saved note. */
 export function noteIcon(): L.DivIcon {
   return L.divIcon({
-    className: 'note-pin',
-    html: '<div class="note-pin-dot"></div>',
-    iconSize: [26, 26],
-    iconAnchor: [13, 26],
-    popupAnchor: [0, -24]
+    className: 'marker-pin marker-note',
+    html: PIN_SVG,
+    iconSize: [26, 38],
+    iconAnchor: [13, 38],
+    popupAnchor: [0, -34]
+  });
+}
+
+/** Distinctly coloured pin for the note currently being placed/dragged. */
+export function placingIcon(): L.DivIcon {
+  return L.divIcon({
+    className: 'marker-pin marker-placing',
+    html: PIN_SVG,
+    iconSize: [26, 38],
+    iconAnchor: [13, 38],
+    popupAnchor: [0, -34]
   });
 }
 
