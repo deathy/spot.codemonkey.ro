@@ -7,8 +7,8 @@ import { AddButton } from './components/AddButton';
 import { SettingsView } from './components/SettingsView';
 import type { GpsFix, MapCamera, Note } from './lib/types';
 import { getAllNotes, getImage, putNote, deleteNote, deleteImage } from './lib/db';
-import { getLocation, primeLocation } from './lib/geo';
-import { processImage } from './lib/image';
+import { getLocation, primeLocation, haversine, SAME_LOCATION_THRESHOLD_M } from './lib/geo';
+import { processImage, readGpsFromExif } from './lib/image';
 import { DEFAULT_CENTER } from './lib/map';
 
 type View = 'map' | 'list' | 'settings';
@@ -72,14 +72,29 @@ export function App() {
     photoInputRef.current?.click();
   }
 
+  // A photo note is being taken here and now, so anchor it to the live GPS fix
+  // (kept fresh by watchPosition), not wherever the map happens to be panned.
+  function photoSeedLocation(): { lat: number; lng: number; accuracy?: number } {
+    if (location) return { lat: location.lat, lng: location.lng, accuracy: location.accuracy };
+    const cam = cameraRef.current;
+    if (cam) return { lat: cam.lat, lng: cam.lng };
+    return { lat: DEFAULT_CENTER[0], lng: DEFAULT_CENTER[1] };
+  }
+
   async function onPhotoPicked(ev: Event) {
     const input = ev.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
-    const processed = await processImage(file);
+    const [exif, processed] = await Promise.all([readGpsFromExif(file), processImage(file)]);
+    const seed = photoSeedLocation();
+    const dist = exif ? haversine(seed, exif) : 0;
+    const suggestedLocation =
+      exif && dist > SAME_LOCATION_THRESHOLD_M
+        ? { lat: exif.lat, lng: exif.lng, distanceM: dist }
+        : null;
     setDraftMode('create');
-    setDraft({ ...seedLocation(), text: '', imageBlob: processed });
+    setDraft({ ...seed, text: '', imageBlob: processed, suggestedLocation });
     setView('map');
   }
 

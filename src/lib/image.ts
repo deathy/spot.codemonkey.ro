@@ -58,3 +58,27 @@ export async function processImage(file: Blob): Promise<Blob> {
 export function objectUrl(blob: Blob): string {
   return URL.createObjectURL(blob);
 }
+
+export interface LatLng {
+  lat: number;
+  lng: number;
+}
+
+/**
+ * Read GPS coordinates embedded in a photo's EXIF, if present. `exifr` is loaded
+ * lazily so it never touches the initial bundle. Never throws — returns null for
+ * images without location (or on any parse error). Note: `processImage` re-encodes
+ * via canvas and so strips EXIF, so always read the *original* file here.
+ */
+export async function readGpsFromExif(file: Blob): Promise<LatLng | null> {
+  try {
+    const { default: exifr } = await import('exifr');
+    const gps = await exifr.gps(file);
+    if (gps && Number.isFinite(gps.latitude) && Number.isFinite(gps.longitude)) {
+      return { lat: gps.latitude, lng: gps.longitude };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}

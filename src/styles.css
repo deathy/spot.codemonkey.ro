@@ -294,6 +294,26 @@ button.danger {
   flex: 1;
 }
 
+.loc-suggest {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+}
+.loc-suggest p {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.loc-suggest-actions {
+  display: flex;
+  gap: 8px;
+}
+.loc-suggest-actions button {
+  flex: 1;
+}
+
 .coords {
   margin: 12px 0 0;
   font-size: 0.85rem;

@@ -144,12 +144,13 @@ export function MapView({
           onPlacingMoveRef.current(p.lat, p.lng);
         });
         placingMarkerRef.current = marker;
-        // Bring the pin into view (helps when editing a note that's off-screen).
-        if (!map.getBounds().contains([placing.lat, placing.lng])) {
-          map.panTo([placing.lat, placing.lng]);
-        }
       } else {
         placingMarkerRef.current.setLatLng([placing.lat, placing.lng]);
+      }
+      // Keep the pin on screen. It's already in view after a drag; this matters
+      // when placing/editing off-screen or jumping to a photo's EXIF location.
+      if (!map.getBounds().contains([placing.lat, placing.lng])) {
+        map.panTo([placing.lat, placing.lng]);
       }
     } else if (placingMarkerRef.current) {
       placingMarkerRef.current.remove();

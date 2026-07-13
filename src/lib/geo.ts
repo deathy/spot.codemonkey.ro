@@ -58,6 +58,10 @@ export function primeLocation(): void {
     });
 }
 
+// Below this, two coordinates are treated as "the same place" — used to decide
+// whether a photo's embedded location is worth offering as an alternative.
+export const SAME_LOCATION_THRESHOLD_M = 10;
+
 const EARTH_RADIUS_M = 6_371_000;
 const toRad = (deg: number) => (deg * Math.PI) / 180;
 
