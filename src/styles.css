@@ -216,6 +216,25 @@ button.danger {
     transform: translateY(0);
   }
 }
+/* Note-form sheet: a bottom sheet with NO dimming backdrop, so the map stays
+   bright and draggable above it. */
+.form-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1500;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  background: var(--bg-elev);
+  border-radius: 16px 16px 0 0;
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
+  animation: slide-up 0.18s ease-out;
+  max-height: 70dvh;
+  overflow-y: auto;
+}
 .sheet-handle {
   width: 40px;
   height: 4px;
@@ -223,7 +242,8 @@ button.danger {
   background: var(--bg-elev-2);
   margin: 4px auto 12px;
 }
-.sheet h2 {
+.sheet h2,
+.form-sheet h2 {
   margin: 0 0 12px;
   font-size: 1.1rem;
 }

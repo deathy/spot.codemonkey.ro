@@ -62,10 +62,11 @@ export function NoteForm({ draft, mode, onChange, onSave, onCancel }: Props) {
   const canSave = Boolean(draft.text.trim() || draft.imageBlob || shownImage);
 
   return (
-    <div class="sheet-backdrop" onClick={onCancel}>
-      <div class="sheet" onClick={(e) => e.stopPropagation()}>
-        <div class="sheet-handle" />
-        <h2>{mode === 'create' ? 'New note' : 'Edit note'}</h2>
+    // No dimming backdrop: the map stays bright and interactive above the sheet
+    // so you can still read street names and drag the pin while placing a note.
+    <div class="form-sheet">
+      <div class="sheet-handle" />
+      <h2>{mode === 'create' ? 'New note' : 'Edit note'}</h2>
 
         <textarea
           class="note-text"
@@ -112,12 +113,11 @@ export function NoteForm({ draft, mode, onChange, onSave, onCancel }: Props) {
           <span class="coords-hint">Drag the pin on the map to adjust</span>
         </p>
 
-        <div class="sheet-buttons">
-          <button onClick={onCancel}>Cancel</button>
-          <button class="primary" disabled={!canSave || busy} onClick={onSave}>
-            Save
-          </button>
-        </div>
+      <div class="sheet-buttons">
+        <button onClick={onCancel}>Cancel</button>
+        <button class="primary" disabled={!canSave || busy} onClick={onSave}>
+          Save
+        </button>
       </div>
     </div>
   );
