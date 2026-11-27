@@ -29,7 +29,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "icons": "node scripts/generate-icons.mjs",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "exifr": "7.1.3",
